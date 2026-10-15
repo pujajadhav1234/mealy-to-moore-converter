@@ -1,0 +1,27 @@
+{
+  "name": "mealy-to-moore-converter",
+  "version": "1.0.0",
+  "description": "Automated Mealy to Moore Machine Converter for Desktop and Mobile",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "node server.js",
+    "desktop": "electron .",
+    "pack-win": "electron-builder --win",
+    "cli": "node cli.js",
+    "test": "node test_converter.js"
+  },
+  "keywords": [
+    "automata",
+    "mealy",
+    "moore",
+    "converter",
+    "fsm"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "dependencies": {
+    "docx": "^9.11.0",
+    "pptxgenjs": "^4.0.1",
+    "xlsx": "^0.18.5"
+  }
+}

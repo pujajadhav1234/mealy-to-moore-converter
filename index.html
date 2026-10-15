@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mealy2Moore">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Mealy to Moore Machine Automated Converter & Simulator</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="badge-tag">Theoretical Computer Science & Automata Engine</div>
+        <h1>Automated Mealy to Moore Converter</h1>
+        <p class="subtitle">Convert any Mealy Machine matrix into its mathematically equivalent Moore Machine with step-by-step state splitting, visual diagram rendering, and real-time dual simulation.</p>
+      </div>
+      <div class="header-actions">
+        <button id="btn-install-pwa" class="btn btn-outline hidden">📲 Install App</button>
+        <button id="btn-quick-tour" class="btn btn-secondary">Theory & Guide</button>
+        <button id="btn-run-convert" class="btn btn-primary pulse">Convert Machine ⚡</button>
+      </div>
+    </header>
+
+    <!-- Preset Selector Bar -->
+    <section class="preset-bar">
+      <span class="preset-label">📚 Load Classic Presets:</span>
+      <div class="preset-buttons">
+        <button class="btn-preset active" data-preset="seq101">101 Sequence Detector</button>
+        <button class="btn-preset" data-preset="twosComp">2's Complement Generator</button>
+        <button class="btn-preset" data-preset="textbook4">4-State Exam Problem</button>
+        <button class="btn-preset" data-preset="parity">Parity Checker</button>
+        <button class="btn-preset" data-preset="serialAdder">Serial Adder</button>
+      </div>
+    </section>
+
+    <!-- Main Workspace Grid -->
+    <div class="workspace-grid">
+      <!-- Left Panel: Input Configuration -->
+      <section class="card input-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="icon">⚙️</span>
+            <h2>Mealy Machine Input Matrix</h2>
+          </div>
+          <div class="input-mode-tabs">
+            <button class="tab-btn active" data-tab="tab-visual">Visual Table</button>
+            <button class="tab-btn" data-tab="tab-raw">Matrix / Text</button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Configuration Controls -->
+          <div class="config-row">
+            <div class="config-field">
+              <label for="alphabet-input">Input Alphabet (\(\Sigma\)):</label>
+              <input type="text" id="alphabet-input" value="0, 1" placeholder="e.g. 0, 1 or a, b">
+            </div>
+            <div class="config-field">
+              <label for="start-state-select">Initial State (\(q_0\)):</label>
+              <select id="start-state-select"></select>
+            </div>
+            <div class="config-field">
+              <label for="init-output-val">Moore Initial Output (\(\lambda'(q_0')\)):</label>
+              <input type="text" id="init-output-val" value="0" placeholder="0 or -">
+            </div>
+          </div>
+
+          <!-- Visual Table Tab -->
+          <div id="tab-visual" class="tab-content active">
+            <div class="table-toolbar">
+              <button id="btn-add-state" class="btn btn-sm btn-outline">+ Add State</button>
+              <button id="btn-remove-state" class="btn btn-sm btn-outline text-danger">- Remove State</button>
+              <span class="helper-text">Format per input column: <code>Next State / Output</code></span>
+            </div>
+            <div class="table-responsive">
+              <table id="mealy-input-table" class="matrix-table">
+                <thead id="mealy-table-head"></thead>
+                <tbody id="mealy-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Raw Text / Matrix Tab -->
+          <div id="tab-raw" class="tab-content">
+            <div class="raw-help">
+              <p>Paste transition table in CSV, pipe, or whitespace format:</p>
+              <code>PresentState, Next(x=0), Out(x=0), Next(x=1), Out(x=1)</code>
+            </div>
+            <textarea id="raw-matrix-input" rows="8" placeholder="q0, q1, 0, q0, 1&#10;q1, q1, 0, q2, 1"></textarea>
+            <button id="btn-parse-raw" class="btn btn-sm btn-primary">Apply Matrix Data</button>
+          </div>
+
+          <div class="options-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-reachable-only" checked>
+              <span>Keep only reachable Moore states (Recommended)</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Conversion Results -->
+      <section class="card output-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="icon">🎯</span>
+            <h2>Moore Machine Result Matrix</h2>
+          </div>
+          <div class="export-dropdown">
+            <button id="btn-export-menu" class="btn btn-sm btn-outline">Export ▼</button>
+            <div id="export-dropdown-content" class="dropdown-content hidden">
+              <button id="exp-latex">LaTeX Table</button>
+              <button id="exp-markdown">Markdown Table</button>
+              <button id="exp-csv">CSV Format</button>
+              <button id="exp-json">JSON Schema</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="result-stats" id="result-stats">
+            <div class="stat-pill"><span class="stat-label">Mealy States:</span> <b id="stat-mealy-count">-</b></div>
+            <div class="stat-arrow">➔</div>
+            <div class="stat-pill"><span class="stat-label">Moore States:</span> <b id="stat-moore-count">-</b></div>
+            <div class="stat-pill"><span class="stat-label">Start State:</span> <b id="stat-moore-start">-</b></div>
+          </div>
+
+          <!-- Moore Transition Table -->
+          <div class="table-responsive">
+            <table id="moore-result-table" class="matrix-table moore-table">
+              <thead id="moore-table-head"></thead>
+              <tbody id="moore-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Step-by-Step Breakdown Accordion -->
+    <section class="card explanation-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="icon">🔍</span>
+          <h2>Algorithmic Conversion Steps & Mathematical Proof</h2>
+        </div>
+        <button id="btn-toggle-steps" class="btn btn-sm btn-outline">Toggle Details</button>
+      </div>
+      <div class="card-body" id="steps-container">
+        <div class="step-card">
+          <div class="step-badge">Step 1</div>
+          <div class="step-info">
+            <h3>Incoming Outputs Analysis (\(O(q)\))</h3>
+            <p>For each state \(q \in Q\), identify all distinct outputs produced by incoming transitions: \(O(q) = \{ \lambda(p, a) \mid \delta(p, a) = q \}\).</p>
+            <div id="step-incoming-analysis" class="analysis-box"></div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-badge">Step 2</div>
+          <div class="step-info">
+            <h3>State Splitting Logic</h3>
+            <p>If state \(q\) is entered with \(k\) distinct outputs \(\{y_1, \dots, y_k\}\), it splits into \(k\) Moore states: \(q_{y_1}, \dots, q_{y_k}\), with state output \(\lambda'(q_{y_j}) = y_j\).</p>
+            <div id="step-splitting-analysis" class="analysis-box"></div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-badge">Step 3</div>
+          <div class="step-info">
+            <h3>Transition Function Mapping</h3>
+            <p>For every split state \((q, y)\) and input \(a\), the next state is \(\delta'((q, y), a) = (\delta(q, a), \lambda(q, a))\). Transitions copy the behavior of the parent Mealy state.</p>
+            <div id="step-mapping-analysis" class="analysis-box"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- State Diagram Visualizer (SVG) -->
+    <section class="card visualizer-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="icon">📊</span>
+          <h2>State Transition Diagram Visualizer</h2>
+        </div>
+        <div class="view-toggles">
+          <button id="btn-show-mealy-diagram" class="btn btn-sm btn-outline">Mealy Graph</button>
+          <button id="btn-show-moore-diagram" class="btn btn-sm btn-primary">Moore Graph</button>
+        </div>
+      </div>
+      <div class="card-body diagram-wrapper">
+        <div id="diagram-view" class="diagram-canvas-container">
+          <svg id="state-diagram-svg" width="100%" height="420"></svg>
+        </div>
+        <div class="diagram-legend" id="diagram-legend"></div>
+      </div>
+    </section>
+
+    <!-- Real-Time Dual Simulator & Equivalence Verifier -->
+    <section class="card simulation-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="icon">🧪</span>
+          <h2>Dual Simulation & Mathematical Equivalence Verifier</h2>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="sim-controls">
+          <div class="sim-input-box">
+            <label for="sim-input-string">Test Input Sequence (\(w \in \Sigma^*\)):</label>
+            <div class="input-with-buttons">
+              <input type="text" id="sim-input-string" value="101101" placeholder="e.g. 101101">
+              <button id="btn-run-sim" class="btn btn-primary">Simulate Sequence ▶</button>
+              <button id="btn-step-sim" class="btn btn-secondary">Step Clock ⏭</button>
+              <button id="btn-reset-sim" class="btn btn-outline">Reset ↺</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-results-grid" id="sim-results-grid">
+          <!-- Mealy Simulation Column -->
+          <div class="sim-column mealy-col">
+            <div class="sim-column-header">
+              <h3>Mealy Machine Simulation</h3>
+              <span class="badge badge-mealy">Output on Transitions (\(n\) bits)</span>
+            </div>
+            <div class="sim-output-box">
+              <div class="sim-metric">Current State: <b id="sim-mealy-curr">-</b></div>
+              <div class="sim-metric">Output Stream: <code id="sim-mealy-stream">-</code></div>
+            </div>
+            <div class="table-responsive sim-table-wrap">
+              <table class="sim-table" id="table-mealy-sim">
+                <thead>
+                  <tr><th>Time \(t\)</th><th>Input</th><th>Present State</th><th>Next State</th><th>Output</th></tr>
+                </thead>
+                <tbody id="body-mealy-sim"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Moore Simulation Column -->
+          <div class="sim-column moore-col">
+            <div class="sim-column-header">
+              <h3>Moore Machine Simulation</h3>
+              <span class="badge badge-moore">Output on States (\(n + 1\) bits)</span>
+            </div>
+            <div class="sim-output-box">
+              <div class="sim-metric">Current State: <b id="sim-moore-curr">-</b></div>
+              <div class="sim-metric">Output Stream: <code id="sim-moore-stream">-</code></div>
+            </div>
+            <div class="table-responsive sim-table-wrap">
+              <table class="sim-table" id="table-moore-sim">
+                <thead>
+                  <tr><th>Time \(t\)</th><th>Input</th><th>Present State</th><th>State Output</th><th>Next State</th></tr>
+                </thead>
+                <tbody id="body-moore-sim"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Equivalence Banner -->
+        <div id="sim-equivalence-banner" class="equivalence-banner">
+          <div class="banner-status-icon">✓</div>
+          <div class="banner-text">
+            <h4>Mathematical Equivalence Verified</h4>
+            <p id="equivalence-explanation">Discarding Moore's initial state output \(\lambda'(q_0')\), the generated output sequences for input string \(w\) are identical: \(\text{Moore}(w) = \lambda'(q_0') \circ \text{Mealy}(w)\).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal for Theory / Export -->
+    <div id="app-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="modal-title">Export Data</h3>
+          <button id="btn-close-modal" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <textarea id="modal-textarea" readonly rows="12"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-modal-copy" class="btn btn-primary">Copy to Clipboard</button>
+          <button id="btn-modal-done" class="btn btn-outline">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Mealy to Moore Automated Finite State Machine Converter &middot; Standard Automata Formal Method Engine</p>
+    </footer>
+  </div>
+
+  <script src="converter.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
